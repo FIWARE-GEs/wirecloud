@@ -16,5 +16,3 @@ jobs:
           owner: Wirecloud
           base: develop
           head: develop
-          auto_approve: true
-          personal_token: ${{ secrets.PERSONAL_TOKEN }}
