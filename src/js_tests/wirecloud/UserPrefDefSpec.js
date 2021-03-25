@@ -56,12 +56,13 @@
 
             it("exposes preference details", () => {
 
-                var meta = new Wirecloud.UserPrefDef({
+                const meta = new Wirecloud.UserPrefDef({
                     name: "pref",
                     type: "text",
                     label: "label content",
                     description: "pref description",
-                    required: true
+                    required: true,
+                    secure: false
                 });
 
                 expect(meta.name).toBe("pref");
@@ -69,18 +70,18 @@
                 expect(meta.label).toBe("label content");
                 expect(meta.description).toBe("pref description");
                 expect(meta.required).toBe(true);
-
+                expect(meta.secure).toBe(false);
             });
 
             describe("boolean", () => {
 
                 it("true", () => {
-                    var meta = new Wirecloud.UserPrefDef({name: "pref", type: "boolean", default: "true"});
+                    const meta = new Wirecloud.UserPrefDef({name: "pref", type: "boolean", default: "true"});
                     expect(meta.default).toBe(true);
                 });
 
                 it("false", () => {
-                    var meta = new Wirecloud.UserPrefDef({name: "pref", type: "boolean", default: "false"});
+                    const meta = new Wirecloud.UserPrefDef({name: "pref", type: "boolean", default: "false"});
                     expect(meta.default).toBe(false);
                 });
 
@@ -89,12 +90,12 @@
             describe("number", () => {
 
                 it("5", () => {
-                    var meta = new Wirecloud.UserPrefDef({name: "pref", type: "number", default: "5"});
+                    const meta = new Wirecloud.UserPrefDef({name: "pref", type: "number", default: "5"});
                     expect(meta.default).toBe(5);
                 });
 
                 it("-25.3434", () => {
-                    var meta = new Wirecloud.UserPrefDef({name: "pref", type: "number", default: "-25.3434"});
+                    const meta = new Wirecloud.UserPrefDef({name: "pref", type: "number", default: "-25.3434"});
                     expect(meta.default).toBe(-25.3434);
                 });
 

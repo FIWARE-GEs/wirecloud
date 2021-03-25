@@ -113,7 +113,7 @@
                 return 0;
             }
 
-            let cells = pixels / this.fromHCellsToPixels(1);
+            const cells = pixels / this.fromHCellsToPixels(1);
             return Math.round(cells);
         }
 
@@ -126,9 +126,9 @@
         }
 
         adaptColumnOffset(size) {
-            let offsetInLU, pixels, parsedSize;
+            let offsetInLU, pixels;
 
-            parsedSize = this.parseSize(size);
+            const parsedSize = this.parseSize(size);
             if (parsedSize[1] === 'cells') {
                 offsetInLU = Math.round(parsedSize[0]);
             } else {
@@ -143,9 +143,9 @@
         }
 
         adaptRowOffset(size) {
-            var offsetInLU, pixels, parsedSize;
+            let offsetInLU, pixels;
 
-            parsedSize = this.parseSize(size);
+            const parsedSize = this.parseSize(size);
             if (parsedSize[1] === 'cells') {
                 offsetInLU = Math.round(parsedSize[0]);
             } else {
@@ -167,14 +167,15 @@
             return height + this.topMargin + this.bottomMargin;
         }
 
-        getColumnOffset(position) {
-            var tmp = Math.floor((this.getWidth() * this.fromHCellsToPercentage(position.x)) / 100);
+        getColumnOffset(position, css) {
+            let tmp = Math.floor((this.getWidth() * this.fromHCellsToPercentage(position.x)) / 100);
             tmp += this.leftMargin + this.dragboard.leftMargin;
-            return tmp;
+            return css ? tmp + 'px' : tmp;
         }
 
-        getRowOffset(position) {
-            return this.dragboard.topMargin + this.fromVCellsToPixels(position.y) + this.topMargin;
+        getRowOffset(position, css) {
+            const offset = this.dragboard.topMargin + this.fromVCellsToPixels(position.y) + this.topMargin;
+            return css ? offset + 'px' : offset;
         }
 
         _notifyWindowResizeEvent(widthChanged, heightChanged) {
@@ -203,16 +204,14 @@
             this.matrix = [];
             this._buffers.base.matrix = this.matrix;
 
-            for (var x = 0; x < this.columns; x++) {
+            for (let x = 0; x < this.columns; x++) {
                 this.matrix[x] = [];
             }
         }
 
         _hasSpaceFor(_matrix, positionX, positionY, width, height) {
-            var x, y;
-
-            for (x = 0; x < width; x++) {
-                for (y = 0; y < height; y++) {
+            for (let x = 0; x < width; x++) {
+                for (let y = 0; y < height; y++) {
                     if (_matrix[positionX + x][positionY + y] != null) {
                         return false;
                     }
@@ -223,7 +222,7 @@
         }
 
         _clearSpace(buffer, widget) {
-            let position = this._getPositionOn(buffer, widget);
+            const position = this._getPositionOn(buffer, widget);
             this._clearSpace2(
                 buffer.matrix,
                 position.x, position.y,
@@ -232,10 +231,8 @@
         }
 
         _compressColumns(_matrix, x, width) {
-            var i, y;
-
-            for (i = 0; i < width; i++) {
-                for (y = _matrix[x + i].length - 1; y >= 0; y--) {
+            for (let i = 0; i < width; i++) {
+                for (let y = _matrix[x + i].length - 1; y >= 0; y--) {
                     if (_matrix[x + i][y] != null) {
                         break;
                     }
@@ -245,20 +242,18 @@
         }
 
         moveSpaceDown(buffer, widget, offsetY) {
-            let widgetstomove, position, finalPosition, edgeY, curwidget, x, y;
+            const widgetstomove = {};
+            const matrix = buffer.matrix;
+            const position = this._getPositionOn(buffer, widget);
+            const finalPosition = new Wirecloud.DragboardPosition(position.x, position.y + offsetY);
 
-            widgetstomove = {};
-            let matrix = buffer.matrix;
-            position = this._getPositionOn(buffer, widget);
-            finalPosition = new Wirecloud.DragboardPosition(position.x, position.y + offsetY);
-
-            edgeY = position.y + widget.shape.height;
+            const edgeY = position.y + widget.shape.height;
 
             // Search affected widgets
             // TODO move widgets according to the biggest offset for optimizing
-            for (x = 0; x < widget.shape.width; x++) {
-                for (y = 0; y < offsetY; y++) {
-                    curwidget = matrix[position.x + x][edgeY + y];
+            for (let x = 0; x < widget.shape.width; x++) {
+                for (let y = 0; y < offsetY; y++) {
+                    const curwidget = matrix[position.x + x][edgeY + y];
                     if (curwidget != null) {
                         widgetstomove[curwidget.id] = offsetY - y; // calculate the offset for this widget
                         break; // continue whit the next column
@@ -267,9 +262,9 @@
             }
 
             // Move affected widgets instances
-            var affectedwidgets = new Set(Object.keys(widgetstomove));
-            for (let key in widgetstomove) {
-                curwidget = this.widgets[key];
+            const affectedwidgets = new Set(Object.keys(widgetstomove));
+            for (const key in widgetstomove) {
+                const curwidget = this.widgets[key];
                 utils.setupdate(affectedwidgets, this.moveSpaceDown(buffer, curwidget, widgetstomove[key]));
             }
 
@@ -285,29 +280,26 @@
          * @returns Returns true if the widget position has been modified
          */
         moveSpaceUp(buffer, widget) {
-            var position, edgeY, offsetY, finalPosition, curWidget,
-                x, y, columnsize;
+            const matrix = buffer.matrix;
+            const position = this._getPositionOn(buffer, widget);
+            const edgeY = position.y + widget.shape.height;
 
-            let matrix = buffer.matrix;
-            position = this._getPositionOn(buffer, widget);
-            edgeY = position.y + widget.shape.height;
-
-            offsetY = 1;
+            let offsetY = 1;
             while (((position.y - offsetY) >= 0) && this._hasSpaceFor(matrix, position.x, position.y - offsetY, widget.shape.width, 1)) {
                 offsetY += 1;
             }
             offsetY -= 1;
 
             if (offsetY > 0) {
-                let widgetstomove = {};
-                finalPosition = new Wirecloud.DragboardPosition(position.x, position.y - offsetY);
+                const widgetstomove = {};
+                const finalPosition = new Wirecloud.DragboardPosition(position.x, position.y - offsetY);
 
                 // Search affected widgets
                 // TODO move the topmost widget for optimizing
-                for (x = 0; x < widget.shape.width; x++) {
-                    columnsize = matrix[position.x + x].length;
-                    for (y = edgeY; y < columnsize; y++) {
-                        curWidget = matrix[position.x + x][y];
+                for (let x = 0; x < widget.shape.width; x++) {
+                    const columnsize = matrix[position.x + x].length;
+                    for (let y = edgeY; y < columnsize; y++) {
+                        const curWidget = matrix[position.x + x][y];
                         if (curWidget != null) {
                             widgetstomove[curWidget.id] = curWidget;
                             break; // continue whit the next column
@@ -321,9 +313,9 @@
                 this._reserveSpace(buffer, widget);
 
                 // Move affected widgets instances
-                let affectedwidgets = new Set(Object.keys(widgetstomove));
+                const affectedwidgets = new Set(Object.keys(widgetstomove));
                 affectedwidgets.add(widget.id);
-                for (let key in widgetstomove) {
+                for (const key in widgetstomove) {
                     utils.setupdate(affectedwidgets, this.moveSpaceUp(buffer, widgetstomove[key]));
                 }
 
@@ -338,28 +330,24 @@
         }
 
         _reserveSpace(buffer, widget) {
-            var position = this._getPositionOn(buffer, widget);
-            var width = widget.shape.width;
-            var height = widget.shape.height;
+            const position = this._getPositionOn(buffer, widget);
+            const width = widget.shape.width;
+            const height = widget.shape.height;
 
             this._reserveSpace2(buffer.matrix, widget, position.x, position.y, width, height);
         }
 
         _reserveSpace2(matrix, widget, positionX, positionY, width, height) {
-            var x, y;
-
-            for (x = 0; x < width; x++) {
-                for (y = 0; y < height; y++) {
+            for (let x = 0; x < width; x++) {
+                for (let y = 0; y < height; y++) {
                     matrix[positionX + x][positionY + y] = widget;
                 }
             }
         }
 
         _clearSpace2(_matrix, positionX, positionY, width, height) {
-            var x, y;
-
-            for (x = 0; x < width; x++) {
-                for (y = 0; y < height; y++) {
+            for (let x = 0; x < width; x++) {
+                for (let y = 0; y < height; y++) {
                     delete _matrix[positionX + x][positionY + y];
                 }
             }
@@ -368,10 +356,10 @@
         }
 
         _notifyResizeEvent(widget, oldWidth, oldHeight, newWidth, newHeight, resizeLeftSide, resizeTopSide, persist) {
-            var x, y;
-            var step2Width = oldWidth; // default value, used when the igdaget's width doesn't change
-            var position = widget.position;
-            var step2X, iWidgetToMove, finalYPos, widthDiff;
+            let x, y;
+            let step2Width = oldWidth; // default value, used when the igdaget's width doesn't change
+            const position = widget.position;
+            let step2X, iWidgetToMove, finalYPos, widthDiff;
             step2X = position.x;
 
             // First Step
@@ -450,8 +438,8 @@
 
             // Second Step
             if (newHeight > oldHeight) {
-                var limitY = position.y + newHeight;
-                var limitX = step2X + step2Width;
+                const limitY = position.y + newHeight;
+                const limitX = step2X + step2Width;
                 for (y = position.y + oldHeight; y < limitY; y++) {
                     for (x = step2X; x < limitX; x++) {
                         if (this.matrix[x][y] != null) {
@@ -477,22 +465,22 @@
          * @returns returns if any widget's position has been modified
          */
         _insertAt(widget, x, y, buffer) {
-            let newPosition = new Wirecloud.DragboardPosition(x > 0 ? x : 0, y > 0 ? y : 0);
+            const newPosition = new Wirecloud.DragboardPosition(x > 0 ? x : 0, y > 0 ? y : 0);
 
             // Move other instances
-            let affectedwidgets = new Set();
-            let lastX = newPosition.x + widget.shape.width;
-            let lastY = newPosition.y + widget.shape.height;
-            let matrix = buffer.matrix;
+            const affectedwidgets = new Set();
+            const lastX = newPosition.x + widget.shape.width;
+            const lastY = newPosition.y + widget.shape.height;
+            const matrix = buffer.matrix;
 
             for (x = newPosition.x; x < lastX; x++) {
                 for (y = newPosition.y; y < lastY; y++) {
-                    let affectedwidget = matrix[x][y];
+                    const affectedwidget = matrix[x][y];
                     if (affectedwidget != null) {
                         // only move the widget if we didn't move it before
-                        let affectedY = this._getPositionOn(buffer, affectedwidget).y;
+                        const affectedY = this._getPositionOn(buffer, affectedwidget).y;
                         // y + widget.shape.height - affectedY - (newPosition.y - y);
-                        let offset = lastY - affectedY;
+                        const offset = lastY - affectedY;
                         // move only the topmost widget in the column
                         affectedwidgets.add(affectedwidget.id);
                         utils.setupdate(affectedwidgets, this.moveSpaceDown(buffer, affectedwidget, offset));
@@ -510,8 +498,8 @@
         }
 
         _searchFreeSpace(width, height) {
-            var positionX = 0, positionY = 0;
-            var maxX = this.columns - width;
+            let positionX = 0, positionY = 0;
+            const maxX = this.columns - width;
 
             for (positionY = 0; true ; positionY++) {
                 for (positionX = 0; positionX <= maxX; positionX++) {
@@ -523,15 +511,13 @@
         }
 
         initialize() {
-            var widget, i, key, position, iWidgetsToReinsert = [];
+            const iWidgetsToReinsert = [];
 
             this._clearMatrix();
 
             // Insert iwidgets
-            for (key in this.widgets) {
-                widget = this.widgets[key];
-
-                position = widget.position;
+            Object.values(this.widgets).forEach((widget) => {
+                const position = widget.position;
 
                 widget.repaint();
 
@@ -546,21 +532,18 @@
                 } else {
                     iWidgetsToReinsert.push(widget);
                 }
-            }
+            })
 
-            var modified = false;
-            if (iWidgetsToReinsert.length > 0) {
-                // Reinsert the iwidgets that didn't fit in their positions
-                for (i = 0; i < iWidgetsToReinsert.length; i++) {
-                    position = this._searchFreeSpace(
-                        iWidgetsToReinsert[i].shape.width,
-                        iWidgetsToReinsert[i].shape.height
-                    );
-                    iWidgetsToReinsert[i].setPosition(position);
-                    this._reserveSpace(this._buffers.base, iWidgetsToReinsert[i]);
-                }
-                modified = true;
-            }
+            const modified = iWidgetsToReinsert.length > 0;
+            // Reinsert the iwidgets that didn't fit in their positions
+            iWidgetsToReinsert.forEach((widget) => {
+                const position = this._searchFreeSpace(
+                    widget.shape.width,
+                    widget.shape.height
+                );
+                widget.setPosition(position);
+                this._reserveSpace(this._buffers.base, widget);
+            });
 
             this.initialized = true;
             return modified;
@@ -570,7 +553,7 @@
          * Calculate what cell is at a given position in pixels
          */
         getCellAt(x, y) {
-            var columnWidth = this.getWidth() / this.columns;
+            const columnWidth = this.getWidth() / this.columns;
 
             return new Wirecloud.DragboardPosition(
                 Math.floor(x / columnWidth),
@@ -597,41 +580,39 @@
                 // TODO: persist
             }
 
-            var position = widget.position;
-            var diff = widget.shape.width + position.x - this.columns;
+            const position = widget.position;
+            const diff = widget.shape.width + position.x - this.columns;
             if (diff > 0) {
                 position.x -= diff;
             }
 
             // Insert it. Returns if there are any affected widget
-            let affectedwidgets = this._insertAt(widget, position.x, position.y, this._buffers.base);
+            const affectedwidgets = this._insertAt(widget, position.x, position.y, this._buffers.base);
 
             this._adaptIWidget(widget);
             return affectedwidgets;
         }
 
         removeWidget(widget, affectsDragboard) {
-            var affectedwidgets = this._removeFromMatrix(this._buffers.base, widget);
+            const affectedwidgets = this._removeFromMatrix(this._buffers.base, widget);
             Wirecloud.ui.DragboardLayout.prototype.removeWidget.call(this, widget, affectsDragboard);
             return affectedwidgets;
         }
 
         moveTo(destLayout) {
-            var movedWidgets, orderedWidgets, x, y, columns, rows, widget;
-
             /*
              * Always use ColumnLayout._removeFromMatrix for removing widgets
              * when moving widgets to another layout.
              */
             this._removeFromMatrix = ColumnLayout.prototype._removeFromMatrix;
 
-            movedWidgets = {};
-            orderedWidgets = [];
-            columns = this.columns;
-            rows = this.rows;
-            for (y = 0; y < rows; y += 1) {
-                for (x = 0; x < columns; x += 1) {
-                    widget = this.matrix[x][y];
+            const movedWidgets = {};
+            const orderedWidgets = [];
+            const columns = this.columns;
+            const rows = this.rows;
+            for (let y = 0; y < rows; y += 1) {
+                for (let x = 0; x < columns; x += 1) {
+                    const widget = this.matrix[x][y];
                     if (widget != null && !(widget.id in movedWidgets)) {
                         orderedWidgets.push(widget);
                         movedWidgets[widget.id] = true;
@@ -648,9 +629,9 @@
         }
 
         _cloneMatrix(matrix) {
-            var i, cloned_matrix = [];
+            const cloned_matrix = [];
 
-            for (i = 0; i < this.columns; i++) {
+            for (let i = 0; i < this.columns; i++) {
                 cloned_matrix[i] = utils.clone(matrix[i]);
             }
 
@@ -658,9 +639,9 @@
         }
 
         _clonePositions(buffer) {
-            let positions = {};
+            const positions = {};
 
-            for (let key in this.widgets) {
+            for (const key in this.widgets) {
                 positions[key] = utils.clone(this._getPositionOn(buffer, this.widgets[key]));
             }
 
@@ -675,7 +656,7 @@
 
             // Check for pendings moves
             if (this.iwidgetToMove != null) {
-                let msg = "Dragboard: There was a pending move that was cancelled because initializedMove function was called before it was finished.";
+                const msg = "Dragboard: There was a pending move that was cancelled because initializedMove function was called before it was finished.";
                 Wirecloud.GlobalLogManager.log(msg, Wirecloud.constants.LOGGING.WARN_MSG);
                 this.cancelMove();
             }
@@ -708,7 +689,7 @@
         }
 
         _setPositions() {
-            var key, curIWidget;
+            let key, curIWidget;
 
             for (key in this.widgets) {
                 curIWidget = this.widgets[key];
@@ -722,12 +703,12 @@
 
         moveTemporally(x, y) {
             if (this.iwidgetToMove == null) {
-                var msg = "Dragboard: You must call initializeMove function before calling to this function (moveTemporally).";
+                const msg = "Dragboard: You must call initializeMove function before calling to this function (moveTemporally).";
                 Wirecloud.GlobalLogManager.log(msg, Wirecloud.constants.LOGGING.WARN_MSG);
                 return;
             }
 
-            let position = this.getCellAt(x, y);
+            const position = this.getCellAt(x, y);
             x = position.x;
             y = position.y;
             if (y < 0) {
@@ -736,14 +717,14 @@
             if (x < 0) {
                 x = 0;
             } else {
-                var maxX = this.columns - this.iwidgetToMove.shape.width;
+                const maxX = this.columns - this.iwidgetToMove.shape.width;
                 if (x > maxX) {
                     x = maxX;
                 }
             }
 
             if (this.dragboardCursor != null) {
-                var cursorpos = this.dragboardCursor.position;
+                const cursorpos = this.dragboardCursor.position;
 
                 if ((cursorpos.y !== y) || (cursorpos.x !== x)) {
                     this._buffers.shadow.positions = this._clonePositions(this._buffers.backup);
@@ -764,14 +745,14 @@
 
         cancelMove() {
             if (this.iwidgetToMove == null) {
-                var msg = "Dragboard: Trying to cancel an inexistant temporal move.";
+                const msg = "Dragboard: Trying to cancel an inexistant temporal move.";
                 Wirecloud.GlobalLogManager.log(msg, Wirecloud.constants.LOGGING.WARN_MSG);
                 return;
             }
 
             this.disableCursor();
 
-            for (var key in this.widgets) {
+            for (const key in this.widgets) {
                 this.widgets[key].setPosition(this.widgets[key].position);
             }
             this.iwidgetToMove = null;
@@ -780,13 +761,13 @@
 
         acceptMove() {
             if (this.iwidgetToMove == null) {
-                var msg = "Dragboard: Function acceptMove called when there is not an started widget move.";
+                const msg = "Dragboard: Function acceptMove called when there is not an started widget move.";
                 Wirecloud.GlobalLogManager.log(msg, Wirecloud.constants.LOGGING.WARN_MSG);
                 return;
             }
 
-            var oldposition = this.iwidgetToMove.position;
-            var newposition = this.dragboardCursor.position;
+            const oldposition = this.iwidgetToMove.position;
+            const newposition = this.dragboardCursor.position;
             this.disableCursor();
 
             // Needed to force repaint of the widget at the correct position
