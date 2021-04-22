@@ -283,7 +283,7 @@
         }
 
         get options() {
-            privates.get(this).tooltip.options;
+            return privates.get(this).tooltip.options;
         }
 
         show(refPosition) {
@@ -299,7 +299,7 @@
         }
 
         bind(element, mode) {
-            privates.get(this).tooltip.bind(element, mode);
+            privates.get(this).tooltip.bind.call(this, element, mode);
             return this;
         }
 
